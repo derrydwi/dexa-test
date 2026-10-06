@@ -1,0 +1,91 @@
+# Build the three production images before deployment.
+# Attach the web service to a TLS reverse proxy; API and database ports stay private.
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?required}
+      IDENTITY_DB_PASSWORD: ${IDENTITY_DB_PASSWORD:?required}
+      ATTENDANCE_DB_PASSWORD: ${ATTENDANCE_DB_PASSWORD:?required}
+      TZ: UTC
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ${MYSQL_INIT_SCRIPT:-./infra/init.production.sh}:/docker-entrypoint-initdb.d/01-init.sh:ro
+    healthcheck:
+      test:
+        ["CMD-SHELL", "mysqladmin ping --protocol=tcp -h 127.0.0.1 --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+  identity:
+    image: wfh-identity:production
+    pull_policy: never
+    restart: unless-stopped
+    environment:
+      TRUST_PROXY: "true"
+      IDENTITY_DATABASE_URL: mysql://identity:${IDENTITY_DB_PASSWORD:?required}@mysql:3306/identity_db
+      APP_ORIGIN: ${APP_ORIGIN:?required}
+      COOKIE_SECURE: "true"
+      DEMO_PASSWORD: ${INITIAL_ACCOUNT_PASSWORD:?required}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:3001/api/identity/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 4s
+      retries: 30
+  attendance:
+    image: wfh-attendance:production
+    pull_policy: never
+    restart: unless-stopped
+    environment:
+      ATTENDANCE_DATABASE_URL: mysql://attendance:${ATTENDANCE_DB_PASSWORD:?required}@mysql:3306/attendance_db
+      IDENTITY_URL: http://identity:3001
+      APP_ORIGIN: ${APP_ORIGIN:?required}
+      COOKIE_SECURE: "true"
+      UPLOAD_DIR: /data/uploads
+    volumes:
+      - attendance-photos:/data/uploads
+    depends_on:
+      mysql:
+        condition: service_healthy
+      identity:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:3002/api/attendance/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 4s
+      retries: 30
+  web:
+    image: wfh-web:production
+    pull_policy: never
+    restart: unless-stopped
+    expose:
+      - "80"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "--quiet", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 4s
+      retries: 10
+    depends_on:
+      identity:
+        condition: service_healthy
+      attendance:
+        condition: service_healthy
+volumes:
+  mysql-data:
+  attendance-photos:

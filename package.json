@@ -1,0 +1,46 @@
+{
+  "name": "wfh-attendance",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "build": "npm run build -w @wfh/contracts && npm run build -w @wfh/common && npm run build -w @wfh/identity && npm run build -w @wfh/attendance && npm run build -w @wfh/web",
+    "typecheck": "npm run build -w @wfh/contracts && npm run build -w @wfh/common && npm run typecheck --workspaces --if-present",
+    "dev": "npm run build && concurrently -n contracts,common,identity,attendance,web -c cyan,yellow,blue,magenta,green \"npm run dev -w @wfh/contracts\" \"npm run dev -w @wfh/common\" \"npm run dev -w @wfh/identity\" \"npm run dev -w @wfh/attendance\" \"npm run dev -w @wfh/web\"",
+    "migrate": "npm run migrate -w @wfh/identity && npm run migrate -w @wfh/attendance",
+    "seed": "npm run seed -w @wfh/identity",
+    "test": "npm run build -w @wfh/contracts && npm run build -w @wfh/common && npm run build -w @wfh/attendance && node --import tsx --test tests/unit.test.ts tests/backend.test.ts tests/frontend.test.ts tests/formatting.test.ts",
+    "test:integration": "node --import tsx --test --test-concurrency=1 tests/integration.test.ts",
+    "test:browser": "node --import tsx tests/browser.mts",
+    "test:persistence": "node --import tsx tests/persistence.mts",
+    "lint": "eslint apps packages tests eslint.config.mjs --max-warnings=0",
+    "lint:fix": "npm run lint -- --fix",
+    "format": "npm run lint:fix && prettier --write .",
+    "format:check": "prettier --check .",
+    "verify": "npm run lint && npm run format:check && npm run typecheck && npm run build && npm test",
+    "test:browser:smoke": "node --import tsx tests/browser-smoke.mts"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^22.19.0",
+    "concurrently": "^9.2.1",
+    "eslint": "^10.11.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "playwright": "^1.56.0",
+    "prettier": "^3.9.9",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.71.0"
+  },
+  "overrides": {
+    "js-yaml": "5.4.2"
+  }
+}

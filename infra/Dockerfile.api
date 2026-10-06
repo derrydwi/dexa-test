@@ -1,0 +1,28 @@
+FROM node:22-bookworm-slim AS build
+WORKDIR /app
+COPY package.json package-lock.json ./
+COPY apps/identity/package.json apps/identity/package.json
+COPY apps/attendance/package.json apps/attendance/package.json
+COPY apps/web/package.json apps/web/package.json
+COPY packages/contracts/package.json packages/contracts/package.json
+COPY packages/common/package.json packages/common/package.json
+RUN npm ci --no-audit --no-fund
+COPY tsconfig.base.json ./
+COPY packages/contracts packages/contracts
+COPY packages/common packages/common
+COPY apps/identity apps/identity
+COPY apps/attendance apps/attendance
+ARG SERVICE
+RUN npm run build -w @wfh/contracts && npm run build -w @wfh/common && npm run build -w @wfh/$SERVICE
+RUN npm prune --omit=dev --no-audit --no-fund
+
+FROM node:22-bookworm-slim
+WORKDIR /app
+COPY --from=build /app /app
+ARG SERVICE
+ENV SERVICE=$SERVICE
+ENV NODE_ENV=production
+RUN mkdir -p /data/uploads && chown node:node /data/uploads
+USER node
+WORKDIR /app/apps/${SERVICE}
+CMD ["sh", "-c", "node dist/database/migrate.js && node dist/main.js"]

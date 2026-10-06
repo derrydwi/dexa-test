@@ -1,0 +1,75 @@
+@import "tailwindcss";
+@theme inline {
+  --color-primary-hover: var(--primary-hover);
+  --color-destructive-hover: var(--destructive-hover);
+  --color-success-ink: var(--success-ink);
+  --color-success-surface: var(--success-surface);
+  --color-working-ink: var(--working-ink);
+  --color-working-surface: var(--working-surface);
+  --color-incomplete-ink: var(--incomplete-ink);
+  --color-incomplete-surface: var(--incomplete-surface);
+  --color-error-ink: var(--error-ink);
+  --color-error-surface: var(--error-surface);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: 5px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
+}
+:root {
+  --primary-hover: #0d665a;
+  --destructive-hover: #922f2f;
+  --success-ink: #287357;
+  --success-surface: #eaf5ee;
+  --working-ink: #136e85;
+  --working-surface: #e9f4f8;
+  --incomplete-ink: #926721;
+  --incomplete-surface: #fcf3df;
+  --error-ink: #923838;
+  --error-surface: #fff0ef;
+
+  --background: #f5f7f8;
+  --foreground: #223c43;
+  --card: #fff;
+  --card-foreground: #223c43;
+  --popover: #fff;
+  --popover-foreground: #223c43;
+  --primary: #147d70;
+  --primary-foreground: #fff;
+  --secondary: #fff;
+  --secondary-foreground: #314b53;
+  --muted: #eef1f3;
+  --muted-foreground: #5b7078;
+  --accent: #f2f6f7;
+  --accent-foreground: #314b53;
+  --destructive: #ad3b3b;
+  --border: #e4eaed;
+  --input: #d9e2e5;
+  --ring: #168477;
+  --radius: 8px;
+  --ink: #142c34;
+  --line: var(--border);
+  --teal: var(--primary);
+  --teal-dark: #0d665a;
+  --nav: var(--ink);
+  --paper: var(--card);
+  --focus: var(--ring);
+}

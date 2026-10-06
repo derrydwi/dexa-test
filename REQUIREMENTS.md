@@ -1,0 +1,34 @@
+# Functional acceptance checklist
+
+The agreed implementation includes check-in **and** check-out evidence, same-day WIB checkout, employee deactivation instead of deletion, and immutable historical attendance. These extend and clarify the original skill-test brief.
+
+| Requirement                                                              | API / owner                        | UI                                        | Automated verification                                                                    |
+| ------------------------------------------------------------------------ | ---------------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Employee login/logout and current session                                | Identity `/api/auth/*`             | Login and sign-out                        | Integration authentication/cookies; browser workflow                                      |
+| Twelve-hour hashed database sessions; expiry/inactive denial             | Identity auth module               | Session-expiry sign-in                    | Integration cookie flags, expired session, deactivation; backend identity client tests    |
+| HR-only employee create/read/update/deactivate/reactivate/password reset | Identity `/api/employees`          | Employee directory and form               | Integration CRUD/roles/duplicates/revocation; browser CRUD                                |
+| No HR registration or HR edits through employee forms                    | Identity employees module          | Employee-only forms                       | Integration forbidden role injection and HR mutation                                      |
+| Server timestamps, one check-in/out per employee/date                    | Attendance submit routes           | My workday                                | Integration simultaneous duplicate check-ins/checkouts and server time                    |
+| Both submissions require JPEG/PNG/WebP evidence, maximum 5 MB            | Attendance photos module           | Photo upload and preview                  | Integration absent/fake/truncated/SVG/oversized files; browser invalid/valid upload       |
+| Protected photo access for owner or HR                                   | Attendance photo routes            | Evidence dialog                           | Integration anonymous/other-employee denial and decoded JPEG; browser photo display       |
+| Clean up files if attendance persistence fails                           | Attendance photos/service          | Submission failure recovery               | Integration concurrent conflicts and upload cleanup                                       |
+| Same-WIB-date checkout; no checkout before check-in                      | Attendance service                 | Workday instructions/confirmation         | Integration pre-check-in and prior-day checkout rejection                                 |
+| Unclosed prior days become Incomplete; new day can start                 | Attendance service and WIB helpers | History and fresh workday                 | Integration prior-day record/new check-in; unit WIB rollover; browser midnight reset      |
+| Attendance remains immutable; HR has view-only access                    | Attendance guards/service          | HR monitoring                             | Integration HR submission/mutation denial; browser monitoring                             |
+| Check-in preserves employee snapshot for history                         | Attendance-owned record            | Historical employee details               | Integration employee snapshot assertion                                                   |
+| Employee sees own history; HR filters all by employee/date/status        | Attendance list                    | History and monitoring filters            | Integration ownership/date/status/pagination; browser selected-filter regression          |
+| DTO validation, pagination, consistent errors                            | Both services                      | Inline errors, retry/empty/loading states | Integration invalid/null/unknown fields, unique conflicts, paging and missing-photo error |
+| Services use isolated databases and communicate over HTTP                | Identity and attendance databases  | Same-origin proxy                         | Integration cross-database access denial; identity failure test                           |
+| Identity errors, malformed responses and timeout fail closed             | Attendance identity client         | Retry/session-expiry states               | Backend real HTTP response/timeout tests; integration outage; browser recovery            |
+| Accessible dialogs, pending-state protection, keyboard navigation        | shadcn/ui + Radix                  | Forms, confirmations, mobile sheet        | Browser pending Escape, focus restoration and mobile navigation                           |
+| Responsive desktop/mobile without viewport overflow                      | Frontend layout/tokens             | All delivered screens                     | Browser 1440px/390px workflow and screenshots                                             |
+| Persistent data, sessions and photos; repeatable seed/migrations         | MySQL/uploads volumes              | Demo accounts                             | Persistence restart suite; explicit seed check                                            |
+| Documented, independently runnable services                              | Workspace/Docker configuration     | Local demo                                | All builds/type checks; Docker health checks; Swagger response schemas                    |
+
+Full verification commands and local-only limitations are documented in README.md. The full browser workflow uses Chromium; Firefox/WebKit smoke checks cover changed controls/forms at desktop, tablet and mobile widths. Viewports are emulated, rather than physical mobile hardware.
+
+## Frontend regression coverage
+
+- `tests/frontend.test.ts`: schema boundaries/normalization, password preservation, photo limits, query-key isolation, cancellation/invalidation, retry policy, session-cache removal, and late-response rejection.
+- `tests/browser.mts`: real HR/employee workflow plus client/server validation, pending Escape/outside protection, repeated file selection/reset, midnight rollover, remote picker failures and out-of-order searches, selected-filter preservation, password-reset login, and WCAG A/AA scans.
+- `tests/browser-smoke.mts`: Firefox/WebKit keyboard Select/combobox operation, focus restoration, long form values, 1440/768/390px widths, photo form/reset and open-control WCAG A/AA scans. Smoke attendance reads are fixtures; real submissions are covered by Chromium and MySQL integration tests.
